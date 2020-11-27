@@ -53,7 +53,7 @@ namespace BatteryMaxTester
         {
             public TestBattery()
             {
-                CurrentCharge = 85;
+                CurrentCharge = 100;
             }
         }
     }

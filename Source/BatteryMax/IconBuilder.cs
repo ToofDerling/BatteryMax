@@ -52,7 +52,7 @@ namespace BatteryMax
         }
 
         /// <summary>
-        /// image will be disposed here.
+        /// Image will be disposed here.
         /// </summary>
         /// <param name="image"></param>
         /// <returns></returns>
@@ -69,7 +69,7 @@ namespace BatteryMax
 
         public Image DrawImage(Battery battery, int drawWidth)
         {
-            using var image = Image.FromFile(IconSettings.Template);
+            var image = Image.FromFile(IconSettings.Template);
 
             if (drawWidth > 0)
             {
@@ -84,15 +84,16 @@ namespace BatteryMax
             using var graphics = Graphics.FromImage(image);
             using var pen = new Pen(default(Color));
 
-            for (var level = 1; level <= levels; level++)
+            for (var xPos = 0; xPos < levels; xPos++)
             {
+                var level = xPos + 1;
                 var color = GetDrawingColor(battery, level);
                 if (pen.Color != color)
                 {
                     pen.Color = color;
                 }
 
-                var x = IconSettings.X + level;
+                var x = IconSettings.X + xPos;
                 graphics.DrawLine(pen, x, IconSettings.Y, x, IconSettings.Y2);
             }
         }
