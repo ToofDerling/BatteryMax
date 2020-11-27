@@ -35,12 +35,16 @@ namespace BatteryMaxTester
             ///*Console.WriteLine(info.Voltage);
             //Console.WriteLine(info.CycleCount);*/
 
+            Settings.Initialize();
+
             var settings = IconSettings.GetSettings(new Size(24, 24));
             var builder = new IconBuilder(settings);
 
             var battery = new TestBattery();
+            var drawWidth = builder.GetDrawingWidth(battery);
 
-            builder.BuildIcon(battery, 0);
+            using var image = builder.DrawImage(battery, drawWidth);
+            image.Save(@"c:\temp\batterymax.png");
 
             Console.ReadLine();
         }
@@ -49,9 +53,8 @@ namespace BatteryMaxTester
         {
             public TestBattery()
             {
-                CurrentCharge = 50;
+                CurrentCharge = 85;
             }
-
         }
     }
 }

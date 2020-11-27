@@ -9,10 +9,11 @@ namespace BatteryMax
         {
             public const int MaximumCharge = 80;
             public const int MinimumCharge = 20;
-            public const string ChargingColor = "0,173,239";
-            public const string DrainingColor = "0,130,100";
-            public const string WarningColor = "255,140,0";
-            public const string CriticalColor = "204,0,0";
+
+            public const string ChargingColor = "0,173,239"; // Blue
+            public const string DrainingColor = "0,130,100"; // Green
+            public const string WarningColor = "255,140,0"; // Orange
+            public const string CriticalColor = "204,0,0"; // Red
         }
 
         public static int MaximumCharge { get; private set; }
@@ -46,15 +47,27 @@ namespace BatteryMax
             {
                 return ParseColor(defaultRgb, null);
             }
-            var tokens = configRgb.Split(',');
 
-            if (tokens.Length != 3
-                || !int.TryParse(tokens[0], out var r) || !int.TryParse(tokens[1], out var g) || !int.TryParse(tokens[2], out var b))
+            const int sz = 3;
+
+            var rgbTokens = configRgb.Split(',');
+            if (rgbTokens.Length != sz)
             {
                 return ParseColor(defaultRgb, null);
             }
 
-            return Color.FromArgb(r, g, b);
+            var rgb = new int[sz];
+            for (int i = 0; i < sz; i++)
+            {
+                if (!int.TryParse(rgbTokens[i], out var rgbVal))
+                {
+                    return ParseColor(defaultRgb, null);
+                }
+
+                rgb[i] = rgbVal;
+            }
+
+            return Color.FromArgb(rgb[0], rgb[1], rgb[2]);
         }
 
         public static void Update(params (string key, object value)[] keyValues)

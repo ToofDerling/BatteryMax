@@ -221,7 +221,8 @@ namespace BatteryMax
 
             if (buildIcon)
             {
-                UpdateIcon = builder.BuildIcon(battery, drawWidth);
+                var image = builder.DrawImage(battery, drawWidth);
+                UpdateIcon = builder.CreateIcon(image);
             }
             else
             {

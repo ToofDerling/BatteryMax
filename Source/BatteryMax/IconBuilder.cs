@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BatteryMax
 {
@@ -29,29 +25,49 @@ namespace BatteryMax
             return drawWidth;
         }
 
-        private static Color GetDrawingColor(Battery battery)
+        private Color GetDrawingColor(Battery battery, int level)
         {
-            if (battery.IsCharging || battery.IsPluggedInNotCharging)
+            if (battery.IsCriticalCharge)
             {
-                return Settings.ChargingColor;
+                return Settings.CriticalColor;
             }
-
-            //TODO: IsAboveMaximumCharge should draw ChargingColor + WarningColor
 
             if (battery.IsBelowMinimumCharge)
             {
                 return Settings.WarningColor;
             }
 
-            if (battery.IsCriticalCharge)
+            var levelPercent = level * IconSettings.PercentPerLevel;
+            if (levelPercent > Settings.MaximumCharge)
             {
-                return Settings.CriticalColor;
+                return Settings.WarningColor;
+            }
+
+            if (battery.IsCharging || battery.IsPluggedInNotCharging)
+            {
+                return Settings.ChargingColor;
             }
 
             return Settings.DrainingColor;
         }
 
-        public Icon BuildIcon(Battery battery, int drawWidth)
+        /// <summary>
+        /// image will be disposed here.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns></returns>
+        public Icon CreateIcon(Image image)
+        {
+            var bitmap = new Bitmap(image);
+            var icon = Icon.FromHandle(bitmap.GetHicon());
+
+            bitmap.Dispose();
+            image.Dispose();
+
+            return icon;
+        }
+
+        public Image DrawImage(Battery battery, int drawWidth)
         {
             using var image = Image.FromFile(IconSettings.Template);
 
@@ -59,12 +75,8 @@ namespace BatteryMax
             {
                 DrawChargeLevel(battery, image, drawWidth);
             }
-#if DEBUG
-            image.Save(@"c:\temp\batterymax.png");
-#endif
 
-            using var bmp = new Bitmap(image);
-            return Icon.FromHandle(bmp.GetHicon());
+            return image;
         }
 
         private void DrawChargeLevel(Battery battery, Image image, int levels)
@@ -72,9 +84,9 @@ namespace BatteryMax
             using var graphics = Graphics.FromImage(image);
             using var pen = new Pen(default(Color));
 
-            for (var level = 0; level < levels; level++)
+            for (var level = 1; level <= levels; level++)
             {
-                var color = GetDrawingColor(battery);
+                var color = GetDrawingColor(battery, level);
                 if (pen.Color != color)
                 {
                     pen.Color = color;
