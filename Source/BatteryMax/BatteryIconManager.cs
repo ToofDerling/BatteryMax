@@ -16,8 +16,12 @@ namespace BatteryMax
 
         public Icon UpdateIcon { get; private set; }
 
-        public BatteryIconManager()
+        private Battery TestBattery { get; set; }
+
+        public BatteryIconManager(Battery testBattery = null)
         {
+            TestBattery = testBattery;
+
             Update();
         }
 
@@ -65,7 +69,7 @@ namespace BatteryMax
 
         private bool Update()
         {
-            var battery = new Battery();
+            var battery = TestBattery ?? new Battery();
 
             if (currentBattery == null
                 || currentBattery.CurrentCharge != battery.CurrentCharge

@@ -51,7 +51,7 @@ namespace BatteryMaxTester
 
         private class TestBattery : Battery
         {
-            public TestBattery()
+            public TestBattery() : base(initialize: false)
             {
                 CurrentCharge = 100;
             }

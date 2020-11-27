@@ -9,7 +9,7 @@ namespace BatteryMax
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        public static void Main()
         {
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
@@ -19,13 +19,22 @@ namespace BatteryMax
             {
                 Settings.Initialize();
 
-                var applicationContext = new CustomApplicationContext();
+                var applicationContext = new CustomApplicationContext(new TestBattery());
+                //var applicationContext = new CustomApplicationContext();
                 Application.Run(applicationContext);
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Program Terminated Unexpectedly", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+    }
+
+    public class TestBattery : Battery
+    {
+        public TestBattery() : base(initialize: false)
+        {
+            CurrentCharge = 100;
         }
     }
 }

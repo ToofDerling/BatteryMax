@@ -3,7 +3,6 @@ using System.Windows.Forms;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Drawing;
-using System.Xml;
 
 /*
  * ==============================================================
@@ -59,9 +58,9 @@ namespace BatteryMax
         /// <summary>
 		/// This class should be created and passed into Application.Run( ... )
 		/// </summary>
-		public CustomApplicationContext()
+		public CustomApplicationContext(Battery testBattery = null)
         {
-            InitializeContext();
+            InitializeContext(testBattery);
         }
 
         private DetailsForm detailsForm;
@@ -83,7 +82,7 @@ namespace BatteryMax
         private IContainer components;	// A list of components to dispose when the context is disposed
         private NotifyIcon notifyIcon;	// The icon that sits in the system tray
 
-        private void InitializeContext()
+        private void InitializeContext(Battery testBattery)
         {
             components = new Container();
             notifyIcon = new NotifyIcon(components)
@@ -108,7 +107,7 @@ namespace BatteryMax
             notifyIcon.ContextMenuStrip.Items.Add(exitItem);
 
             // Handle initial update here. Setting notifyicon visible from BatteryManager thread causes the contextmenu to hang.
-            batteryIconManager = new BatteryIconManager();
+            batteryIconManager = new BatteryIconManager(testBattery);
             UpdateIcon();
 
             notifyIcon.Visible = true;
