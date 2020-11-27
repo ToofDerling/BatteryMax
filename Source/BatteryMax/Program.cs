@@ -19,8 +19,8 @@ namespace BatteryMax
             {
                 Settings.Initialize();
 
-                var applicationContext = new CustomApplicationContext(new TestBattery());
-                //var applicationContext = new CustomApplicationContext();
+                //var applicationContext = new CustomApplicationContext(new TestBattery());
+                var applicationContext = new CustomApplicationContext();
                 Application.Run(applicationContext);
             }
             catch (Exception ex)
