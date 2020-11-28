@@ -26,11 +26,13 @@ namespace BatteryMax
         }
 
         /// <summary>
-        /// Image will be disposed here.
+        /// Image is disposed here.
         /// </summary>
         /// <param name="image"></param>
         /// <returns></returns>
+#pragma warning disable CA1822 // Mark members as static
         public Icon CreateIcon(Image image)
+#pragma warning restore CA1822 // Mark members as static
         {
             var bitmap = new Bitmap(image);
             var icon = Icon.FromHandle(bitmap.GetHicon());
@@ -47,7 +49,6 @@ namespace BatteryMax
 
             if (drawWidth > 0)
             {
-                //DrawChargeLevels(battery, image, drawWidth);
                 DrawChargeLevelsSolid(battery, image, drawWidth);
             }
 
