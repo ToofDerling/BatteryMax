@@ -25,32 +25,6 @@ namespace BatteryMax
             return drawWidth;
         }
 
-        private Color GetDrawingColor(Battery battery, int level)
-        {
-            if (battery.IsCriticalCharge)
-            {
-                return Settings.CriticalColor;
-            }
-
-            if (battery.IsBelowMinimumCharge)
-            {
-                return Settings.WarningColor;
-            }
-
-            var levelPercent = level * IconSettings.PercentPerLevel;
-            if (levelPercent > Settings.MaximumCharge)
-            {
-                return Settings.WarningColor;
-            }
-
-            if (battery.IsCharging || battery.IsPluggedInNotCharging)
-            {
-                return Settings.ChargingColor;
-            }
-
-            return Settings.DrainingColor;
-        }
-
         /// <summary>
         /// Image will be disposed here.
         /// </summary>
@@ -73,13 +47,47 @@ namespace BatteryMax
 
             if (drawWidth > 0)
             {
-                DrawChargeLevel(battery, image, drawWidth);
+                //DrawChargeLevels(battery, image, drawWidth);
+                DrawChargeLevelsSolid(battery, image, drawWidth);
             }
 
             return image;
         }
 
-        private void DrawChargeLevel(Battery battery, Image image, int levels)
+        private void DrawChargeLevelsSolid(Battery battery, Image image, int levels)
+        {
+            using var graphics = Graphics.FromImage(image);
+            using var brush = new SolidBrush(GetColor());
+
+            var height = IconSettings.Y2 - IconSettings.Y + 1;
+            var width = levels;
+
+            graphics.FillRectangle(brush, IconSettings.X, IconSettings.Y, width, height);
+
+            Color GetColor()
+            {
+                if (battery.IsCriticalCharge)
+                {
+                    return Settings.CriticalColor;
+                }
+
+                if (battery.IsBelowMinimumCharge || battery.IsAboveMaximumCharge)
+                {
+                    return Settings.WarningColor;
+                }
+
+                if (battery.IsCharging || battery.IsPluggedInNotCharging)
+                {
+                    return Settings.ChargingColor;
+                }
+
+                return Settings.DrainingColor;
+            }
+        }
+
+        #region DrawChargeLevelsColors - make this an option?
+
+        private void DrawChargeLevelsColors(Battery battery, Image image, int levels)
         {
             using var graphics = Graphics.FromImage(image);
             using var pen = new Pen(default(Color));
@@ -87,15 +95,41 @@ namespace BatteryMax
             for (var xPos = 0; xPos < levels; xPos++)
             {
                 var level = xPos + 1;
-                var color = GetDrawingColor(battery, level);
-                if (pen.Color != color)
-                {
-                    pen.Color = color;
-                }
+
+                SetPen(level);
 
                 var x = IconSettings.X + xPos;
                 graphics.DrawLine(pen, x, IconSettings.Y, x, IconSettings.Y2);
             }
+
+            void SetPen(int level)
+            {
+                Color color;
+
+                if (battery.IsCriticalCharge)
+                {
+                    color = Settings.CriticalColor;
+                }
+                else if (battery.IsBelowMinimumCharge || level * IconSettings.PercentPerLevel > Settings.MaximumCharge)
+                {
+                    color = Settings.WarningColor;
+                }
+                else if (battery.IsCharging || battery.IsPluggedInNotCharging)
+                {
+                    color = Settings.ChargingColor;
+                }
+                else
+                {
+                    color = Settings.DrainingColor;
+                }
+
+                if (pen.Color != color)
+                {
+                    pen.Color = color;
+                }
+            }
         }
+
+        #endregion
     }
 }

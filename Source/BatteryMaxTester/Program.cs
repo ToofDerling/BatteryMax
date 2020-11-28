@@ -37,15 +37,18 @@ namespace BatteryMaxTester
 
             Settings.Initialize();
 
-            var settings = IconSettings.GetSettings(new Size(24, 24));
+            var settings = IconSettings.GetSettings(new Size(16, 16));
             var builder = new IconBuilder(settings);
 
             var battery = new TestBattery();
             var drawWidth = builder.GetDrawingWidth(battery);
 
             using var image = builder.DrawImage(battery, drawWidth);
-            image.Save(@"c:\temp\batterymax.png");
 
+            var path = @"c:\temp\batterymax.png";
+            image.Save(path);
+
+            Console.WriteLine(path);
             Console.ReadLine();
         }
 
