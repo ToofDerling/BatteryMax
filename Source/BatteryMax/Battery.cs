@@ -94,10 +94,10 @@ namespace BatteryMax
             }
             else
             {
+                IsPluggedInNotCharging = status.PowerLineStatus == PowerLineStatus.Online;
+             
                 CalculateRemainingTime();
             }
-
-            IsPluggedInNotCharging = !IsCharging && status.PowerLineStatus == PowerLineStatus.Online;
         }
 
         private void CalculateChargingTime()
@@ -107,7 +107,7 @@ namespace BatteryMax
                 CurrentTime = TimeSpan.FromSeconds(0);
             }
 
-            // double casts to prevent inaccurate int calculations
+            // double cast to prevent inaccurate int calculations
             var totalRequiredCapacity = FullCapacity - (double)CurrentCapacity;
 
             var hoursToTotalCapacity = totalRequiredCapacity / Rate;
@@ -123,7 +123,7 @@ namespace BatteryMax
         private void CalculateRemainingTime()
         {
             if (IsBelowMinimumCharge
-                || TotalSecondsRemaining <= 0 // Will be -1 if chargin
+                || TotalSecondsRemaining <= 0 // Will be -1 if charging
                 || IsPluggedInNotCharging) // This can happen if charging is stopped by an utility like ASUS Battery Health Charging
             {
                 CurrentTime = TimeSpan.FromSeconds(0);
