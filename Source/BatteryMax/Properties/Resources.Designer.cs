@@ -61,11 +61,29 @@ namespace BatteryMax.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Above maximum charge {0}%.
+        /// </summary>
+        internal static string AboveMaximumCharge {
+            get {
+                return ResourceManager.GetString("AboveMaximumCharge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Battery not found.
         /// </summary>
         internal static string BatteryNotFound {
             get {
                 return ResourceManager.GetString("BatteryNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Below minimum charge {0}%.
+        /// </summary>
+        internal static string BelowMinimumCharge {
+            get {
+                return ResourceManager.GetString("BelowMinimumCharge", resourceCulture);
             }
         }
         
@@ -79,47 +97,47 @@ namespace BatteryMax.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}% charging. Above maximum {1}%.
+        ///   Looks up a localized string similar to {0} hr to {1}%.
         /// </summary>
-        internal static string ChargingAboveMaximum {
+        internal static string Hour {
             get {
-                return ResourceManager.GetString("ChargingAboveMaximum", resourceCulture);
+                return ResourceManager.GetString("Hour", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}% charging. {1} hr to {2}%.
+        ///   Looks up a localized string similar to {0} hr {1} min to {2}%.
         /// </summary>
-        internal static string ChargingHour {
+        internal static string HourMin {
             get {
-                return ResourceManager.GetString("ChargingHour", resourceCulture);
+                return ResourceManager.GetString("HourMin", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}% charging. {1} hr {2} min to {3}%.
+        ///   Looks up a localized string similar to {0} min to {1}%.
         /// </summary>
-        internal static string ChargingHourMin {
+        internal static string Min {
             get {
-                return ResourceManager.GetString("ChargingHourMin", resourceCulture);
+                return ResourceManager.GetString("Min", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}% charging. {1} min to {2}%.
+        ///   Looks up a localized string similar to Not charging.
         /// </summary>
-        internal static string ChargingMin {
+        internal static string NotCharging {
             get {
-                return ResourceManager.GetString("ChargingMin", resourceCulture);
+                return ResourceManager.GetString("NotCharging", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to {0}% plugged in. Not charging.
+        ///   Looks up a localized string similar to {0}% plugged in.
         /// </summary>
-        internal static string PluggedInNotCharging {
+        internal static string PluggedIn {
             get {
-                return ResourceManager.GetString("PluggedInNotCharging", resourceCulture);
+                return ResourceManager.GetString("PluggedIn", resourceCulture);
             }
         }
         
@@ -129,42 +147,6 @@ namespace BatteryMax.Properties {
         internal static string Remaining {
             get {
                 return ResourceManager.GetString("Remaining", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to {0}% remaining. Below minimum is {1}%.
-        /// </summary>
-        internal static string RemainingBelowMinimum {
-            get {
-                return ResourceManager.GetString("RemainingBelowMinimum", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to {0}% remaining. {1} hr to {2}%.
-        /// </summary>
-        internal static string RemainingHour {
-            get {
-                return ResourceManager.GetString("RemainingHour", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to {0}% remaining. {1} hr {2} min to {3}%.
-        /// </summary>
-        internal static string RemainingHourMin {
-            get {
-                return ResourceManager.GetString("RemainingHourMin", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to {0}% remaining. {1} min to {2}%.
-        /// </summary>
-        internal static string RemainingMin {
-            get {
-                return ResourceManager.GetString("RemainingMin", resourceCulture);
             }
         }
         

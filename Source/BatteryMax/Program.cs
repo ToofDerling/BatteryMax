@@ -19,8 +19,8 @@ namespace BatteryMax
             {
                 Settings.Initialize();
 
-                //var applicationContext = new CustomApplicationContext(new TestBattery());
-                var applicationContext = new CustomApplicationContext();
+                var applicationContext = new CustomApplicationContext(new TestBattery());
+                //var applicationContext = new CustomApplicationContext();
                 Application.Run(applicationContext);
             }
             catch (Exception ex)
@@ -34,7 +34,9 @@ namespace BatteryMax
     {
         public TestBattery() : base(initialize: false)
         {
-            CurrentCharge = 100;
+            CurrentCharge = 15;
+            CurrentTime = TimeSpan.FromMinutes(12);
+            IsBelowMinimumCharge = true;
         }
     }
 }

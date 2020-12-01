@@ -2,6 +2,7 @@
 using Microsoft.Win32;
 using System;
 using System.Drawing;
+using System.Text;
 using System.Threading;
 
 namespace BatteryMax
@@ -88,7 +89,7 @@ namespace BatteryMax
                 {
                     Log.Write(battery.ToString());
 
-                    var updateText = FormatBatteryUpdateText(battery);
+                    var updateText = TextFormatter.FormatBatteryUpdateText(battery);
                     CreateBatteryText(updateText);
                     WarningText = null;
 
@@ -128,56 +129,6 @@ namespace BatteryMax
             {
                 UpdateText = null;
             }
-        }
-
-        private static string FormatBatteryUpdateText(Battery battery)
-        {
-            var charge = battery.CurrentCharge;
-
-            if (battery.IsCharging)
-            {
-                if (battery.IsAboveMaximumCharge)
-                {
-                    return string.Format(Resources.ChargingAboveMaximum, charge, Settings.MaximumCharge);
-                }
-                if (battery.CurrentTime.TotalSeconds == 0)
-                {
-                    return string.Format(Resources.Charging, charge);
-                }
-                if (battery.CurrentTime.Hours > 0 && battery.CurrentTime.Minutes > 0)
-                {
-                    return string.Format(Resources.ChargingHourMin, charge, battery.CurrentTime.Hours, battery.CurrentTime.Minutes, Settings.MaximumCharge);
-                }
-                if (battery.CurrentTime.Hours > 0)
-                {
-                    return string.Format(Resources.ChargingHour, charge, battery.CurrentTime.Hours, Settings.MaximumCharge);
-                }
-                // This can return "0 min" and that's fine
-                return string.Format(Resources.ChargingMin, charge, battery.CurrentTime.Minutes, Settings.MaximumCharge);
-            }
-
-            if (battery.IsPluggedInNotCharging)
-            {
-                return string.Format(Resources.PluggedInNotCharging, charge);
-            }
-            if (battery.IsBelowMinimumCharge)
-            {
-                return string.Format(Resources.RemainingBelowMinimum, charge, Settings.MinimumCharge);
-            }
-            if (battery.CurrentTime.TotalSeconds == 0)
-            {
-                return string.Format(Resources.Remaining, charge);
-            }
-            if (battery.CurrentTime.Hours > 0 && battery.CurrentTime.Minutes > 0)
-            {
-                return string.Format(Resources.RemainingHourMin, charge, battery.CurrentTime.Hours, battery.CurrentTime.Minutes, Settings.MinimumCharge);
-            }
-            if (battery.CurrentTime.Hours > 0)
-            {
-                return string.Format(Resources.RemainingHour, charge, battery.CurrentTime.Hours, Settings.MinimumCharge);
-            }
-            // This can return "0 min" and that's fine
-            return string.Format(Resources.RemainingMin, charge, battery.CurrentTime.Minutes, Settings.MinimumCharge);
         }
 
         private readonly object lockObj = new object();

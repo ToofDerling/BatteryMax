@@ -21,9 +21,13 @@ namespace BatteryMax
         public int CurrentCharge { get; protected set; }
 
         /// <summary>
-        /// Calculated time to Minimum- or MaximumCharge
+        /// This can represent four different values:
+        /// If IsCharging and <= MaximumCharge it's the time to MaximumCharge.
+        /// If IsCharging and > MaximumCharge it's the time to full charge.
+        /// If not IsCharging and >= MinimumCharge it's the time to MinimumCharge.
+        /// If not IsCharging and < MinimumCharge it's the time to zero charge.
         /// </summary>
-        public TimeSpan CurrentTime { get; private set; }
+        public TimeSpan CurrentTime { get; protected set; }
 
         /// <summary>
         /// True if battery is charging. Note that we can run on AC power and not be charging. 
@@ -31,7 +35,7 @@ namespace BatteryMax
         public bool IsCharging { get; protected set; }
 
         /// <summary>
-        /// If system runs on AC power. This can be true even if not charging.
+        /// If system runs on AC power but isn't charging.
         /// </summary>
         public bool IsPluggedInNotCharging { get; protected set; }
 
@@ -45,7 +49,7 @@ namespace BatteryMax
         /// </summary>
         public bool IsBelowMinimumCharge { get; protected set; }
 
-        // Remaining seconds as reported by Windows (is -1 if charging)
+        // Remaining seconds to zero charge as reported by Windows (is -1 if charging)
         private int TotalSecondsRemaining { get; set; }
 
         // Only set if charging
@@ -102,9 +106,10 @@ namespace BatteryMax
 
         private void CalculateChargingTime()
         {
-            if (IsAboveMaximumCharge || Rate == 0)
+            if (Rate == 0)
             {
                 CurrentTime = TimeSpan.FromSeconds(0);
+                return;
             }
 
             // double cast to prevent inaccurate int calculations
@@ -112,6 +117,12 @@ namespace BatteryMax
 
             var hoursToTotalCapacity = totalRequiredCapacity / Rate;
             TimeToFullCapacity = TimeSpan.FromHours(hoursToTotalCapacity);
+
+            if (IsAboveMaximumCharge)
+            {
+                CurrentTime = TimeToFullCapacity;
+                return;
+            }
 
             var maximumCapacity = FullCapacity / 100d * Settings.MaximumCharge;
             var maximumRequiredCapacity = maximumCapacity - CurrentCapacity;
@@ -122,11 +133,17 @@ namespace BatteryMax
 
         private void CalculateRemainingTime()
         {
-            if (IsBelowMinimumCharge
-                || TotalSecondsRemaining <= 0 // Will be -1 if charging
+            if (TotalSecondsRemaining <= 0 // Will be -1 if charging
                 || IsPluggedInNotCharging) // This can happen if charging is stopped by an utility like ASUS Battery Health Charging
             {
                 CurrentTime = TimeSpan.FromSeconds(0);
+                return;
+            }
+
+            if (IsBelowMinimumCharge)
+            {
+                CurrentTime = TimeSpan.FromSeconds(TotalSecondsRemaining);
+                return;
             }
 
             // double cast to prevent inaccurate int calculations

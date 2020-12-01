@@ -117,41 +117,35 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AboveMaximumCharge" xml:space="preserve">
+    <value>Above maximum charge {0}%</value>
+  </data>
   <data name="BatteryNotFound" xml:space="preserve">
     <value>Battery not found</value>
+  </data>
+  <data name="BelowMinimumCharge" xml:space="preserve">
+    <value>Below minimum charge {0}%</value>
   </data>
   <data name="Charging" xml:space="preserve">
     <value>{0}% charging</value>
   </data>
-  <data name="ChargingAboveMaximum" xml:space="preserve">
-    <value>{0}% charging. Above maximum {1}%</value>
+  <data name="Hour" xml:space="preserve">
+    <value>{0} hr to {1}%</value>
   </data>
-  <data name="ChargingHour" xml:space="preserve">
-    <value>{0}% charging. {1} hr to {2}%</value>
+  <data name="HourMin" xml:space="preserve">
+    <value>{0} hr {1} min to {2}%</value>
   </data>
-  <data name="ChargingHourMin" xml:space="preserve">
-    <value>{0}% charging. {1} hr {2} min to {3}%</value>
+  <data name="Min" xml:space="preserve">
+    <value>{0} min to {1}%</value>
   </data>
-  <data name="ChargingMin" xml:space="preserve">
-    <value>{0}% charging. {1} min to {2}%</value>
+  <data name="NotCharging" xml:space="preserve">
+    <value>Not charging</value>
   </data>
-  <data name="PluggedInNotCharging" xml:space="preserve">
-    <value>{0}% plugged in. Not charging</value>
+  <data name="PluggedIn" xml:space="preserve">
+    <value>{0}% plugged in</value>
   </data>
   <data name="Remaining" xml:space="preserve">
     <value>{0}% remaining</value>
-  </data>
-  <data name="RemainingBelowMinimum" xml:space="preserve">
-    <value>{0}% remaining. Below minimum is {1}%</value>
-  </data>
-  <data name="RemainingHour" xml:space="preserve">
-    <value>{0}% remaining. {1} hr to {2}%</value>
-  </data>
-  <data name="RemainingHourMin" xml:space="preserve">
-    <value>{0}% remaining. {1} hr {2} min to {3}%</value>
-  </data>
-  <data name="RemainingMin" xml:space="preserve">
-    <value>{0}% remaining. {1} min to {2}%</value>
   </data>
   <data name="TooltipMaxLength" xml:space="preserve">
     <value>123456789012345678901234567890123456789012345678901234567890123</value>
