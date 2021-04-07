@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace BatteryMax
 {
@@ -12,7 +13,7 @@ namespace BatteryMax
             IconSettings = iconSettings;
         }
 
-        public int GetDrawingWidth(Battery battery)
+        public int GetDrawingWidth(BatteryData battery)
         {
             var drawWidth = Convert.ToInt32(battery.CurrentCharge / IconSettings.PercentPerLevel);
 
@@ -25,112 +26,58 @@ namespace BatteryMax
             return drawWidth;
         }
 
-        /// <summary>
-        /// Image is disposed here.
-        /// </summary>
-        /// <param name="image"></param>
-        /// <returns></returns>
-#pragma warning disable CA1822 // Mark members as static
-        public Icon CreateIcon(Image image)
-#pragma warning restore CA1822 // Mark members as static
+        public Icon DrawIcon(BatteryData battery, int drawWidth)
         {
-            var bitmap = new Bitmap(image);
+            // Format32bppArgb is the pixel format required for transparancy
+            using var bitmap = new Bitmap(IconSettings.Width, IconSettings.Height, PixelFormat.Format32bppArgb);
+            using var graphics = Graphics.FromImage(bitmap);
+
+            DrawBackground(graphics, bitmap);
+            DrawForeground(graphics);
+            DrawChargeLevels(graphics, battery, drawWidth);
+
             var icon = Icon.FromHandle(bitmap.GetHicon());
-
-            bitmap.Dispose();
-            image.Dispose();
-
             return icon;
         }
 
-        public Image DrawImage(Battery battery, int drawWidth)
+        private void DrawBackground(Graphics graphics, Bitmap bitmap)
         {
-            var image = Image.FromFile(IconSettings.Template);
-
-            if (drawWidth > 0)
+            if (IconSettings.BackgroundColor == Color.Transparent)
             {
-                DrawChargeLevelsSolid(battery, image, drawWidth);
+                bitmap.MakeTransparent();
             }
-
-            return image;
-        }
-
-        private void DrawChargeLevelsSolid(Battery battery, Image image, int levels)
-        {
-            using var graphics = Graphics.FromImage(image);
-            using var brush = new SolidBrush(GetColor());
-
-            var height = IconSettings.Y2 - IconSettings.Y + 1;
-            var width = levels;
-
-            graphics.FillRectangle(brush, IconSettings.X, IconSettings.Y, width, height);
-
-            Color GetColor()
+            else
             {
-                if (battery.IsCriticalCharge)
-                {
-                    return Settings.CriticalColor;
-                }
-
-                if (battery.IsBelowMinimumCharge || battery.IsAboveMaximumCharge)
-                {
-                    return Settings.WarningColor;
-                }
-
-                if (battery.IsCharging || battery.IsPluggedInNotCharging)
-                {
-                    return Settings.ChargingColor;
-                }
-
-                return Settings.DrainingColor;
+                using var backgroundBrush = new SolidBrush(IconSettings.BackgroundColor);
+                graphics.FillRectangle(backgroundBrush, 0, 0, IconSettings.Width, IconSettings.Height);
             }
         }
 
-        #region DrawChargeLevelsColors - make this an option?
-
-        private void DrawChargeLevelsColors(Battery battery, Image image, int levels)
+        private void DrawForeground(Graphics graphics)
         {
-            using var graphics = Graphics.FromImage(image);
-            using var pen = new Pen(default(Color));
-
-            for (var xPos = 0; xPos < levels; xPos++)
+            if (IconSettings.Rectangles == null || IconSettings.Rectangles.Length == 0)
             {
-                var level = xPos + 1;
-
-                SetPen(level);
-
-                var x = IconSettings.X + xPos;
-                graphics.DrawLine(pen, x, IconSettings.Y, x, IconSettings.Y2);
+                return;
             }
 
-            void SetPen(int level)
+            using var pen = new Pen(IconSettings.ForegroundColor);
+            foreach (var drawRectangle in IconSettings.Rectangles)
             {
-                Color color;
-
-                if (battery.IsCriticalCharge)
-                {
-                    color = Settings.CriticalColor;
-                }
-                else if (battery.IsBelowMinimumCharge || level * IconSettings.PercentPerLevel > Settings.MaximumCharge)
-                {
-                    color = Settings.WarningColor;
-                }
-                else if (battery.IsCharging || battery.IsPluggedInNotCharging)
-                {
-                    color = Settings.ChargingColor;
-                }
-                else
-                {
-                    color = Settings.DrainingColor;
-                }
-
-                if (pen.Color != color)
-                {
-                    pen.Color = color;
-                }
+                graphics.DrawRectangle(pen, drawRectangle.X, drawRectangle.Y, drawRectangle.Width, drawRectangle.Height);
             }
         }
 
-        #endregion
+        private void DrawChargeLevels(Graphics graphics, BatteryData battery, int levels)
+        {
+            if (levels <= 0)
+            {
+                return;
+            }
+
+            var rect = IconSettings.GetChargeLevelsRectangle(levels);
+
+            using var brush = new SolidBrush(IconSettings.GetColor(battery));
+            graphics.FillRectangle(brush, rect);
+        }
     }
 }

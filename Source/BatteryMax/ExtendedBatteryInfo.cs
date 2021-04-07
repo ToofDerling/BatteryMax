@@ -8,7 +8,7 @@ namespace BatteryMax
      * BatteryInfo by https://gist.github.com/ahawker/9715872
      * With additional work by https://gist.github.com/StevenJDH/c66655967e21072b1d8644456129efc0  
      */
-    public class BatteryInformation
+    public class ExtendedBatteryInformation
     {
         //BATTERY_INFORMATION
         public int DesignedCapacity { get; set; }
@@ -22,10 +22,10 @@ namespace BatteryMax
         public int Rate { get; set; }
     }
 
-    public static class BatteryInfo
+    public static class ExtendedBatteryInfo
     {
 
-        public static BatteryInformation GetBatteryInformation()
+        public static ExtendedBatteryInformation Get()
         {
             IntPtr deviceDataPointer = IntPtr.Zero;
             IntPtr queryInfoPointer = IntPtr.Zero;
@@ -97,7 +97,7 @@ namespace BatteryMax
 
                 Win32.SetupDiDestroyDeviceInfoList(deviceHandle);
 
-                return new BatteryInformation()
+                return new ExtendedBatteryInformation()
                 {
                     DesignedCapacity = updatedBatteryInformation.DesignedCapacity,
                     FullChargeCapacity = updatedBatteryInformation.FullChargedCapacity,

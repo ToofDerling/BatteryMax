@@ -3,6 +3,7 @@ using System.Windows.Forms;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Drawing;
+using System.Threading.Tasks;
 
 /*
  * ==============================================================
@@ -55,14 +56,6 @@ namespace BatteryMax
     {
         private BatteryIconManager batteryIconManager;
 
-        /// <summary>
-		/// This class should be created and passed into Application.Run( ... )
-		/// </summary>
-		public CustomApplicationContext(Battery testBattery = null)
-        {
-            InitializeContext(testBattery);
-        }
-
         private DetailsForm detailsForm;
 
         private void ShowDetailsForm()
@@ -82,7 +75,7 @@ namespace BatteryMax
         private IContainer components;	// A list of components to dispose when the context is disposed
         private NotifyIcon notifyIcon;	// The icon that sits in the system tray
 
-        private void InitializeContext(Battery testBattery)
+        public async Task InitializeContextAsync(BatteryData testBatteryData = null)
         {
             components = new Container();
             notifyIcon = new NotifyIcon(components)
@@ -106,12 +99,12 @@ namespace BatteryMax
             exitItem.Click += (s, e) => ExitThread();
             notifyIcon.ContextMenuStrip.Items.Add(exitItem);
 
+            batteryIconManager = new BatteryIconManager();
+            await batteryIconManager.InitializeDataAsync(testBatteryData);
+
             // Handle initial update here. Setting notifyicon visible from BatteryManager thread causes the contextmenu to hang.
-            batteryIconManager = new BatteryIconManager(testBattery);
             UpdateIcon();
-
             notifyIcon.Visible = true;
-
             // ShowBalloonTip only works when notifyicon is visble so any initial message (like battery not found) must run here.
             ShowBalloon();
 

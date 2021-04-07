@@ -1,63 +1,50 @@
-﻿using BatteryMax;
+﻿using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Configuration;
-using System.Drawing;
+using Windows.UI.ViewManagement;
 
 namespace BatteryMaxTester
 {
-    class Program
+    public class Program
     {
-        static void Main(string[] _)
+        private const string RegistryKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+
+        private const string RegistryValueName = "SystemUsesLightTheme";
+
+        private enum WindowsTheme
         {
+            Light,
+            Dark
+        }
+        private static WindowsTheme GetWindowsTheme()
+        {
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RegistryKeyPath))
+            {
+                object registryValueObject = key?.GetValue(RegistryValueName);
+                if (registryValueObject == null)
+                {
+                    return WindowsTheme.Light;
+                }
 
+                int registryValue = (int)registryValueObject;
 
-            //var info = BatteryInfo.GetBatteryInformation();
-
-            //Console.WriteLine($"Charge/discharge rate: {info.Rate}");
-            //Console.WriteLine($"Current capacity: {info.CurrentCapacity}");
-            //Console.WriteLine($"Full capacity: {info.FullChargeCapacity}");
-            ////Console.WriteLine($"Designed capacity: {info.DesignedCapacity}");
-            ////Console.WriteLine($"PowerState: {info.PowerState}");
-
-            //Console.WriteLine();
-
-            //// Remaining Battery Life[h] = Battery Remaining Capacity[mAh / mWh] / Battery Present Drain Rate[mA / mW]
-
-            //var capacity = (float)info.FullChargeCapacity - info.CurrentCapacity;
-            //Console.WriteLine(capacity);
-
-            //var hour = capacity / info.Rate;
-            //Console.WriteLine(hour);
-
-            //var ts = TimeSpan.FromHours(hour);
-            //Console.WriteLine(ts.Minutes);
-
-            ///*Console.WriteLine(info.Voltage);
-            //Console.WriteLine(info.CycleCount);*/
-
-            Settings.Initialize();
-
-            var settings = IconSettings.GetSettings(new Size(16, 16));
-            var builder = new IconBuilder(settings);
-
-            var battery = new TestBattery();
-            var drawWidth = builder.GetDrawingWidth(battery);
-
-            using var image = builder.DrawImage(battery, drawWidth);
-
-            var path = @"c:\temp\batterymax.png";
-            image.Save(path);
-
-            Console.WriteLine(path);
-            Console.ReadLine();
+                return registryValue > 0 ? WindowsTheme.Light : WindowsTheme.Dark;
+            }
         }
 
-        private class TestBattery : Battery
+        static void Main(string[] _)
         {
-            public TestBattery() : base(initialize: false)
-            {
-                CurrentCharge = 100;
-            }
+            Console.WriteLine(GetWindowsTheme());
+
+            var settings = new UISettings();
+            settings.ColorValuesChanged += Settings_ColorValuesChanged;
+
+            Console.ReadLine();
+        }
+        private static void Settings_ColorValuesChanged(UISettings sender, object args)
+        {
+            Console.WriteLine(GetWindowsTheme());
         }
     }
 }

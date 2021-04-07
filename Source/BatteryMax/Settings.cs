@@ -1,24 +1,19 @@
-﻿using System.Configuration;
+﻿using System;
 using System.Drawing;
 
 namespace BatteryMax
 {
     public class Settings
     {
-        private static class Defaults
-        {
-            public const int MaximumCharge = 80;
-            public const int MinimumCharge = 20;
-
-            public const string ChargingColor = "0,173,239"; // Blue
-            public const string DrainingColor = "0,130,100"; // Green
-            public const string WarningColor = "255,140,0"; // Orange
-            public const string CriticalColor = "204,0,0"; // Red
-        }
-
         public static int MaximumCharge { get; private set; }
 
         public static int MinimumCharge { get; private set; }
+
+        public static Color BackgroundColor { get; private set; }
+
+        public static Color ForegroundColorDarkTheme { get; private set; }
+
+        public static Color ForegroundColorLightTheme { get; private set; }
 
         public static Color ChargingColor { get; private set; }
 
@@ -28,61 +23,70 @@ namespace BatteryMax
 
         public static Color CriticalColor { get; private set; }
 
-        public static void Initialize()
+        public static BatteryIcon BatteryIcon100 { get; private set; }
+
+        public static void Initialize(BatteryMaxConfiguration config)
         {
-            var appSettings = ConfigurationManager.AppSettings;
+            MinimumCharge = GetChargeLevel(config.ChargeLevels.Minimum, nameof(MinimumCharge));
+            MaximumCharge = GetChargeLevel(config.ChargeLevels.Maximum, nameof(MaximumCharge));
+            ValidateChargeLevels();
 
-            MaximumCharge = int.TryParse(appSettings[nameof(MaximumCharge)], out var maximumCharge) ? maximumCharge : Defaults.MaximumCharge;
-            MinimumCharge = int.TryParse(appSettings[nameof(MinimumCharge)], out var minimumcharge) ? minimumcharge : Defaults.MinimumCharge;
+            BackgroundColor = GetIconColor(config.IconColors.Background, nameof(BackgroundColor));
+            ForegroundColorDarkTheme = GetIconColor(config.IconColors.ForegroundDarkTheme, nameof(ForegroundColorDarkTheme));
+            ForegroundColorLightTheme = GetIconColor(config.IconColors.ForegroundLightTheme, nameof(ForegroundColorLightTheme));
 
-            ChargingColor = ParseColor(appSettings[nameof(ChargingColor)], Defaults.ChargingColor);
-            DrainingColor = ParseColor(appSettings[nameof(DrainingColor)], Defaults.DrainingColor);
-            WarningColor = ParseColor(appSettings[nameof(WarningColor)], Defaults.WarningColor);
-            CriticalColor = ParseColor(appSettings[nameof(CriticalColor)], Defaults.CriticalColor);
+            ChargingColor = GetIconColor(config.IconColors.Charging, nameof(ChargingColor));
+            DrainingColor = GetIconColor(config.IconColors.Draining, nameof(DrainingColor));
+            WarningColor = GetIconColor(config.IconColors.Warning, nameof(WarningColor));
+            CriticalColor = GetIconColor(config.IconColors.Critical, nameof(CriticalColor));
+
+            var batteryIconDefaults = BatteryMaxConfiguration.BatteryIconDefaults();
+            BatteryIcon100 = config.BatteryIcon100 ?? batteryIconDefaults.BatteryIcon100;
         }
 
-        private static Color ParseColor(string configRgb, string defaultRgb)
+        private static int GetChargeLevel(int value, string name)
         {
-            if (string.IsNullOrWhiteSpace(configRgb))
+            if (value is > 100 or < 0)
             {
-                return ParseColor(defaultRgb, null);
+                throw new ApplicationException($"Value of '{value}' is not valid for {name}. {name} must be greater than or equal to 0 and less than or equal to 100");
             }
 
-            const int sz = 3;
+            return value;
+        }
 
-            var rgbTokens = configRgb.Split(',');
-            if (rgbTokens.Length != sz)
+        private static void ValidateChargeLevels()
+        {
+            if (MinimumCharge >= MaximumCharge)
             {
-                return ParseColor(defaultRgb, null);
+                throw new ApplicationException($"{nameof(MinimumCharge)} '{MinimumCharge}' must be less than {nameof(MaximumCharge)} '{MaximumCharge}'");
             }
+        }
 
-            var rgb = new int[sz];
-            for (int i = 0; i < sz; i++)
+        private static Color GetIconColor(Rgb rgb, string name)
+        {
+            try
             {
-                if (!int.TryParse(rgbTokens[i], out var rgbVal))
+                if (!string.IsNullOrEmpty(rgb.Name))
                 {
-                    return ParseColor(defaultRgb, null);
+                    if (!Enum.TryParse(typeof(KnownColor), rgb.Name, ignoreCase: true, out object _))
+                    {
+                        throw new ApplicationException($"{name}: \"{rgb.Name}\" is not a valid color name");
+                    }
+
+                    return Color.FromName(rgb.Name);
                 }
 
-                rgb[i] = rgbVal;
+                if (rgb.Alpha.HasValue)
+                {
+                    return Color.FromArgb(rgb.Alpha.Value, rgb.Red.Value, rgb.Green.Value, rgb.Blue.Value);
+                }
+
+                return Color.FromArgb(rgb.Red.Value, rgb.Green.Value, rgb.Blue.Value);
             }
-
-            return Color.FromArgb(rgb[0], rgb[1], rgb[2]);
-        }
-
-        public static void Update(params (string key, object value)[] keyValues)
-        {
-            var config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-
-            foreach (var (key, value) in keyValues)
+            catch (ArgumentException ex)
             {
-                config.AppSettings.Settings[key].Value = value.ToString();
+                throw new ApplicationException($"{name}: {ex.Message}");
             }
-
-            config.Save(ConfigurationSaveMode.Modified);
-            ConfigurationManager.RefreshSection(config.AppSettings.SectionInformation.Name);
-
-            Initialize();
         }
     }
 }

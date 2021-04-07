@@ -1,86 +1,125 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace BatteryMax
 {
     public class IconSettings
     {
-        public string Template { get; set; }
+        private readonly BatteryIcon batteryIcon;
 
-        public int X { get; set; }
-        public int Y { get; set; }
-        public int Y2 { get; set; }
+        public IconSettings(BatteryIcon batteryIcon, WindowsTheme theme)
+        {
+            this.batteryIcon = batteryIcon;
 
-        public int Levels { get; set; }
-        public float PercentPerLevel => 100f / Levels;
+            ForegroundColor = theme == WindowsTheme.Light ? Settings.ForegroundColorLightTheme : Settings.ForegroundColorDarkTheme;
+        }
 
-        public static IconSettings GetSettings()
+        public int Width => batteryIcon.Size;
+        public int Height => batteryIcon.Size;
+
+        public Color BackgroundColor => Settings.BackgroundColor;
+        public Color ForegroundColor { get; private set; }
+
+        public DrawRectangle[] Rectangles => batteryIcon.Rectangles;
+
+        public float PercentPerLevel => 100f / batteryIcon.Levels.Maximum;
+
+        public static IconSettings GetSettings(WindowsTheme theme)
         {
             var size = SystemInformation.SmallIconSize;
             Log.Write($"{nameof(SystemInformation.SmallIconSize)}={size.Width}x{size.Height}");
 
-            return GetSettings(size);
+            return GetSettings(size, theme);
         }
 
-        public static IconSettings GetSettings(Size size)
+        public static IconSettings GetSettings(Size size, WindowsTheme theme)
         {
+            var check = size.Width;
             if (size.Width != size.Height)
             {
-                //Can this happen?
+                check = Math.Min(size.Width, size.Height);
             }
 
             // Assume that reducing is better than enlarging
-            if (size.Width < 20)
+            if (check < 20)
             {
-                return settings100;
+                return new IconSettings(Settings.BatteryIcon100, theme);
             }
 
-            if (size.Width < 24)
+            if (check < 24)
             {
-                return settings150;
+                return null; //settings150;
             }
 
-            return settings150;
+            return null;// settings150;
         }
 
-        private static readonly IconSettings settings100 = new IconSettings
+        public Color GetColor(BatteryData battery)
         {
-            Template = @"icons\template_16.png",
-            X = 3,
-            Y = 6,
-            Y2 = 11,
-            Levels = 10
-        };
+            if (battery.IsCriticalCharge)
+            {
+                return Settings.CriticalColor;
+            }
 
+            if (battery.IsBelowMinimumCharge || battery.IsAboveMaximumCharge)
+            {
+                return Settings.WarningColor;
+            }
+
+            if (battery.IsCharging || battery.IsPluggedInNotCharging)
+            {
+                return Settings.ChargingColor;
+            }
+
+            return Settings.DrainingColor;
+        }
+
+        public Rectangle GetChargeLevelsRectangle(int levels)
+        {
+            if (batteryIcon.Levels.Height.HasValue)
+            {
+                return new Rectangle(batteryIcon.Levels.X, batteryIcon.Levels.Y, levels, batteryIcon.Levels.Height.Value);
+            }
+
+            if (batteryIcon.Levels.Width.HasValue)
+            {
+                // X,Y are bottom left
+                return new Rectangle(batteryIcon.Levels.X, batteryIcon.Levels.Y - levels, batteryIcon.Levels.Width.Value, levels);
+            }
+
+            throw new ArgumentException("Cannot create a chargelevels rectangle without a width or a height");
+        }
+
+
+        /*      private static readonly IconSettings settings100 = new()
+              {
+                  Width = 16,
+                  Height = 16,
+
+                  X = 3,
+                  Y = 6,
+                  Y2 = 11,
+
+                  Levels = 10,
+
+                  Template = @"icons\template_16.png",
+              };
+        */
         //TODO:
-        private static readonly IconSettings settings125 = new IconSettings
-        {
-            Template = @"icons\template_20.png",
+        /*
+                private static readonly IconSettings settings150 = new IconSettings
+                {
+                    Width = 24,
+                    Height = 24,
 
-            X = 3,
-            Y = 5,
-            Y2 = 6,
-            Levels = 10
-        };
 
-        private static readonly IconSettings settings150 = new IconSettings
-        {
-            Template = @"icons\template_24.png",
-            X = 3,
-            Y = 8,
-            Y2 = 17,
-            Levels = 18
-        };
-
-        //TODO:
-        private static readonly IconSettings settings175 = new IconSettings
-        {
-            Template = @"icons\template_28.png",
-
-            X = 3,
-            Y = 5,
-            Y2 = 6,
-            Levels = 10
-        };
+                    Template = @"icons\template_24.png",
+                    X = 3,
+                    Y = 8,
+                    Y2 = 17,
+                    Levels = 18
+                };
+        */
     }
 }

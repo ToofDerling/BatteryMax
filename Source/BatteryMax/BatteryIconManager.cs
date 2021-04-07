@@ -1,9 +1,10 @@
 ﻿using BatteryMax.Properties;
-using Microsoft.Win32;
 using System;
 using System.Drawing;
-using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
+using Windows.Devices.Power;
+using Windows.UI.ViewManagement;
 
 namespace BatteryMax
 {
@@ -17,48 +18,78 @@ namespace BatteryMax
 
         public Icon UpdateIcon { get; private set; }
 
-        private Battery TestBattery { get; set; }
+        // The actual hardware battery 
+        private Battery battery;
 
-        public BatteryIconManager(Battery testBattery = null)
+        private BatteryData batteryData;
+
+        private BatteryData testBatteryData;
+
+        private UISettings uiSettings;
+
+        private WindowsTheme windowsTheme;
+
+        public async Task InitializeDataAsync(BatteryData testBatteryData = null)
         {
-            TestBattery = testBattery;
+            this.testBatteryData = testBatteryData;
 
-            Update();
-        }
-
-        public void Start()
-        {
-            var managerThread = new Thread(ThreadLööp)
+            if (this.testBatteryData == null)
             {
-                IsBackground = true
-            };
+                var device = new BatteryDevice();
+                battery = await device.GetBatteryAsync();
 
-            managerThread.Start();
+                if (battery != null)
+                {
+                    // Based on observation this fires immediately when power status changes. But when unchanged it
+                    // fires in 3-6 minutes intervals (which is useless of course).                  
+                    battery.ReportUpdated += (s, e) => OnBatteryDataChanged();
+                }
+            }
 
-            SystemEvents.PowerModeChanged += OnPowerModeChanged;
+            uiSettings = new UISettings();
+            // Based on observation this fires immediately when Windows theme changes. But none of colors in GetColorValue()
+            // or UIElementColor() are actually updated, so changing the colors must be done manually.
+            uiSettings.ColorValuesChanged += (s, e) => OnWindowsThemeChanged();
+
+            windowsTheme = ThemeHelper.GetWindowsTheme();
         }
 
-        private void OnPowerModeChanged(object sender, PowerModeChangedEventArgs e)
+        private void OnBatteryDataChanged()
         {
-            if (e.Mode == PowerModes.StatusChange && !stop)
+            Log.Write("OnBatteryDataChanged");
+            OnDataChanged();
+        }
+
+        private void OnWindowsThemeChanged()
+        {
+            Log.Write($"OnWindowsThemeChanged -> {ThemeHelper.GetWindowsTheme()}");
+            OnDataChanged();
+        }
+
+        private void OnDataChanged()
+        {
+            if (!stopThreadLoop)
             {
                 lock (lockObj)
                 {
                     Monitor.Pulse(lockObj);
                 }
-
-                Log.Write($"Handled {nameof(PowerModes.StatusChange)}");
             }
         }
 
-        private bool stop;
+        public void Start()
+        {
+            var managerThread = new Thread(ThreadLoop)
+            {
+                IsBackground = true
+            };
+
+            managerThread.Start();
+        }
 
         public void Stop()
         {
-            stop = true;
-
-            // MSDN: "Because this is a static event, you must detach your event handlers when your application is disposed, or memory leaks will result."
-            SystemEvents.PowerModeChanged -= OnPowerModeChanged;
+            stopThreadLoop = true;
 
             lock (lockObj)
             {
@@ -66,50 +97,53 @@ namespace BatteryMax
             }
         }
 
-        private Battery currentBattery = null;
-
         private bool Update()
         {
-            var battery = TestBattery ?? new Battery();
+            var currentBatteryData = testBatteryData ?? new BatteryData(battery);
+            var currentWindowsTheme = ThemeHelper.GetWindowsTheme();
 
-            if (currentBattery == null
-                || currentBattery.CurrentCharge != battery.CurrentCharge
-                || currentBattery.CurrentTime != battery.CurrentTime
-                || currentBattery.IsCharging != battery.IsCharging
-                || currentBattery.IsPluggedInNotCharging != battery.IsPluggedInNotCharging)
+            var windowsThemeChanged = windowsTheme != currentWindowsTheme;
+
+            if (windowsThemeChanged
+                || batteryData == null
+                || batteryData.CurrentCharge != currentBatteryData.CurrentCharge
+                || batteryData.CurrentTime != currentBatteryData.CurrentTime
+                || batteryData.IsCharging != currentBatteryData.IsCharging
+                || batteryData.IsPluggedInNotCharging != currentBatteryData.IsPluggedInNotCharging)
             {
-                if (battery.IsNotAvailable)
+                if (currentBatteryData.IsNotAvailable)
                 {
-                    CreateBatteryText(Resources.BatteryNotFound);
+                    CreateBatteryUpdateText(Resources.BatteryNotFound);
                     CreateBatteryWarningText(Resources.BatteryNotFound);
 
-                    CreateBatteryIcon(battery, false);
+                    CreateBatteryIcon(currentBatteryData, false, currentWindowsTheme, windowsThemeChanged);
                 }
                 else
                 {
-                    Log.Write(battery.ToString());
+                    Log.Write(currentBatteryData.ToString());
 
-                    var updateText = TextFormatter.FormatBatteryUpdateText(battery);
-                    CreateBatteryText(updateText);
+                    var currentUpdateText = TextFormatter.FormatBatteryUpdateText(currentBatteryData);
+                    CreateBatteryUpdateText(currentUpdateText);
                     WarningText = null;
 
-                    var chargingChanged = currentBattery == null || currentBattery.IsCharging != battery.IsCharging;
-                    CreateBatteryIcon(battery, chargingChanged);
+                    var chargingChanged = batteryData == null || batteryData.IsCharging != currentBatteryData.IsCharging;
+                    CreateBatteryIcon(currentBatteryData, chargingChanged, currentWindowsTheme, windowsThemeChanged);
                 }
 
-                currentBattery = battery;
+                batteryData = currentBatteryData;
+                windowsTheme = currentWindowsTheme;
                 return true;
             }
             return false;
         }
 
-        private string currentWarningText = null;
+        private string warningText = null;
 
-        private void CreateBatteryWarningText(string warning)
+        private void CreateBatteryWarningText(string currentWarningText)
         {
-            if (currentWarningText != warning)
+            if (warningText != currentWarningText)
             {
-                WarningText = currentWarningText = warning;
+                WarningText = warningText = currentWarningText;
             }
             else
             {
@@ -117,13 +151,13 @@ namespace BatteryMax
             }
         }
 
-        private string currentUpdateText = null;
+        private string updateText = null;
 
-        private void CreateBatteryText(string updateText)
+        private void CreateBatteryUpdateText(string currentUpdateText)
         {
-            if (currentUpdateText != updateText)
+            if (updateText != currentUpdateText)
             {
-                UpdateText = currentUpdateText = updateText;
+                UpdateText = updateText = currentUpdateText;
             }
             else
             {
@@ -131,24 +165,27 @@ namespace BatteryMax
             }
         }
 
-        private readonly object lockObj = new object();
+        private readonly object lockObj = new();
 
-        private void ThreadLööp()
+        private bool stopThreadLoop;
+
+        private void ThreadLoop()
         {
             try
             {
-                while (!stop)
+                while (!stopThreadLoop)
                 {
-                    if (Update() && !stop)
+                    if (Update() && !stopThreadLoop)
                     {
                         BatteryChanged?.Invoke(this, new EventArgs());
                     }
 
-                    if (!stop)
+                    if (!stopThreadLoop)
                     {
                         lock (lockObj)
                         {
-                            Monitor.Wait(lockObj, 1000);
+                            var timedOut = !Monitor.Wait(lockObj, 1000);
+                            Log.Write($"timedOut={timedOut}");
                         }
                     }
                 }
@@ -159,25 +196,24 @@ namespace BatteryMax
             }
         }
 
-        private int currentDrawWidth = -1;
+        private int drawWidth = -1;
 
-        private void CreateBatteryIcon(Battery battery, bool chargingChanged)
+        private void CreateBatteryIcon(BatteryData battery, bool chargingChanged, WindowsTheme theme, bool themeChanged)
         {
-            var iconSettings = IconSettings.GetSettings();
+            var iconSettings = IconSettings.GetSettings(theme);
 
             var builder = new IconBuilder(iconSettings);
 
-            var drawWidth = builder.GetDrawingWidth(battery);
+            var currentDrawWidth = builder.GetDrawingWidth(battery);
 
-            var buildIcon = drawWidth != currentDrawWidth || chargingChanged;
-            currentDrawWidth = drawWidth;
+            var buildIcon = currentDrawWidth != drawWidth || chargingChanged || themeChanged;
+            drawWidth = currentDrawWidth;
 
-            Log.Write($"{nameof(buildIcon)}={buildIcon} {nameof(chargingChanged)}={chargingChanged} {nameof(drawWidth)}={drawWidth}");
+            Log.Write($"{nameof(buildIcon)}={buildIcon} {nameof(currentDrawWidth)}={currentDrawWidth} {nameof(chargingChanged)}={chargingChanged} {nameof(themeChanged)}={themeChanged}  ");
 
             if (buildIcon)
             {
-                var image = builder.DrawImage(battery, drawWidth);
-                UpdateIcon = builder.CreateIcon(image);
+                UpdateIcon = builder.DrawIcon(battery, currentDrawWidth);
             }
             else
             {

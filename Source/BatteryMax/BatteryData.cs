@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Windows.Forms;
+using Windows.Devices.Power;
 
 namespace BatteryMax
 {
-    public class Battery
+    public class BatteryData
     {
         /// <summary>
         /// If true all other properties will have their default value
         /// </summary>
-        public bool IsNotAvailable { get; private set; }
+        public bool IsNotAvailable { get; protected set; }
 
         /// <summary>
         /// Typically 5% or lower.
@@ -21,7 +22,7 @@ namespace BatteryMax
         public int CurrentCharge { get; protected set; }
 
         /// <summary>
-        /// This can represent four different values:
+        /// This represents one of four different values:
         /// If IsCharging and <= MaximumCharge it's the time to MaximumCharge.
         /// If IsCharging and > MaximumCharge it's the time to full charge.
         /// If not IsCharging and >= MinimumCharge it's the time to MinimumCharge.
@@ -53,20 +54,20 @@ namespace BatteryMax
         private int TotalSecondsRemaining { get; set; }
 
         // Only set if charging
-        private int Rate { get; set; }
+        private int ChargeRate { get; set; }
 
         // Only set if charging
         private int FullCapacity { get; set; }
 
         // Only set if charging
-        private uint CurrentCapacity { get; set; }
+        private int RemainingCapacity { get; set; }
 
         // Only set if charging
         private TimeSpan TimeToFullCapacity { get; set; }
 
-        public Battery(bool initialize = true)
+        public BatteryData(Battery battery)
         {
-            if (!initialize)
+            if (IsNotAvailable = battery == null)
             {
                 return;
             }
@@ -88,11 +89,11 @@ namespace BatteryMax
 
             if (IsCharging = status.BatteryChargeStatus.HasFlag(BatteryChargeStatus.Charging))
             {
-                var details = BatteryInfo.GetBatteryInformation();
+                var report = battery.GetReport();
 
-                Rate = details.Rate;
-                FullCapacity = details.FullChargeCapacity;
-                CurrentCapacity = details.CurrentCapacity;
+                ChargeRate = report.ChargeRateInMilliwatts.GetValueOrDefault();
+                FullCapacity = report.FullChargeCapacityInMilliwattHours.GetValueOrDefault();
+                RemainingCapacity = report.RemainingCapacityInMilliwattHours.GetValueOrDefault();
 
                 CalculateChargingTime();
             }
@@ -106,16 +107,16 @@ namespace BatteryMax
 
         private void CalculateChargingTime()
         {
-            if (Rate == 0)
+            if (ChargeRate == 0)
             {
                 CurrentTime = TimeSpan.FromSeconds(0);
                 return;
             }
 
             // double cast to prevent inaccurate int calculations
-            var totalRequiredCapacity = FullCapacity - (double)CurrentCapacity;
+            var totalRequiredCapacity = FullCapacity - (double)RemainingCapacity;
 
-            var hoursToTotalCapacity = totalRequiredCapacity / Rate;
+            var hoursToTotalCapacity = totalRequiredCapacity / ChargeRate;
             TimeToFullCapacity = TimeSpan.FromHours(hoursToTotalCapacity);
 
             if (IsAboveMaximumCharge)
@@ -125,9 +126,9 @@ namespace BatteryMax
             }
 
             var maximumCapacity = FullCapacity / 100d * Settings.MaximumCharge;
-            var maximumRequiredCapacity = maximumCapacity - CurrentCapacity;
+            var maximumRequiredCapacity = maximumCapacity - RemainingCapacity;
 
-            var hoursToMaximumCapacity = maximumRequiredCapacity / Rate;
+            var hoursToMaximumCapacity = maximumRequiredCapacity / ChargeRate;
             CurrentTime = TimeSpan.FromHours(hoursToMaximumCapacity);
         }
 

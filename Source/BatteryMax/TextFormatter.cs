@@ -5,7 +5,7 @@ namespace BatteryMax
 {
     public class TextFormatter
     {
-        public static string FormatBatteryUpdateText(Battery battery)
+        public static string FormatBatteryUpdateText(BatteryData battery)
         {
             var currentCharge = battery.CurrentCharge;
 
@@ -57,7 +57,7 @@ namespace BatteryMax
             return sb.ToString();
         }
 
-        private static void FormatTime(StringBuilder sb, Battery battery, int targetCharge)
+        private static void FormatTime(StringBuilder sb, BatteryData battery, int targetCharge)
         {
             if (battery.CurrentTime.Hours > 0 && battery.CurrentTime.Minutes > 0)
             {
