@@ -28,14 +28,16 @@ namespace BatteryMax
 
         public Icon DrawIcon(BatteryData battery, int drawWidth)
         {
-            // Format32bppArgb is the pixel format required for transparancy
+            // Format32bppArgb is required for transparancy
             using var bitmap = new Bitmap(IconSettings.Width, IconSettings.Height, PixelFormat.Format32bppArgb);
             using var graphics = Graphics.FromImage(bitmap);
 
             DrawBackground(graphics, bitmap);
             DrawForeground(graphics);
             DrawChargeLevels(graphics, battery, drawWidth);
-
+#if DEBUG
+            bitmap.Save(@$"c:\system\temp\batterymax-{drawWidth}.png");
+#endif
             var icon = Icon.FromHandle(bitmap.GetHicon());
             return icon;
         }

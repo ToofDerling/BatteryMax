@@ -71,7 +71,7 @@ namespace BatteryMax
             currentWindowsTheme = ThemeHelper.GetWindowsTheme();
             if (windowsTheme != currentWindowsTheme)
             {
-                Log.Write($"OnWindowsThemeChanged -> {currentWindowsTheme}");
+                Log.Write("OnWindowsThemeChanged -> {0}", currentWindowsTheme);
                 SignalDataChanged();
             }
         }
@@ -134,7 +134,7 @@ namespace BatteryMax
                 }
                 else
                 {
-                    Log.Write(currentBatteryData.ToString());
+                    Log.Write("Battery: {0}", currentBatteryData);
 
                     var currentUpdateText = TextFormatter.FormatBatteryUpdateText(currentBatteryData);
                     CreateBatteryUpdateText(currentUpdateText);
@@ -204,7 +204,7 @@ namespace BatteryMax
             }
             catch (Exception ex)
             {
-                Log.Write($"BatteryIconManager thread error {ex}");
+                Log.Write("BatteryIconManager thread error: {0}", ex);
             }
         }
 

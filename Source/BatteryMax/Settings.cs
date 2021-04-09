@@ -25,6 +25,8 @@ namespace BatteryMax
 
         public static BatteryIcon BatteryIcon100 { get; private set; }
 
+        public static BatteryIcon BatteryIcon150 { get; private set; }
+
         public static void Initialize(BatteryMaxConfiguration config)
         {
             MinimumCharge = GetChargeLevel(config.ChargeLevels.Minimum, nameof(MinimumCharge));
@@ -42,6 +44,7 @@ namespace BatteryMax
 
             var batteryIconDefaults = BatteryMaxConfiguration.BatteryIconDefaults();
             BatteryIcon100 = config.BatteryIcon100 ?? batteryIconDefaults.BatteryIcon100;
+            BatteryIcon150 = config.BatteryIcon150 ?? batteryIconDefaults.BatteryIcon150;
         }
 
         private static int GetChargeLevel(int value, string name)

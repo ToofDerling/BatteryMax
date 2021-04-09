@@ -1,4 +1,6 @@
-﻿namespace BatteryMax
+﻿using System.Drawing;
+
+namespace BatteryMax
 {
     public class ChargeLevels
     {
@@ -30,13 +32,14 @@
         public Rgb Critical { get; set; }
     }
 
-    public class DrawRectangle
-    {
-        public int X { get; set; }
-        public int Y { get; set; }
-
-        public int Width { get; set; }
-        public int Height { get; set; }
+    public enum BatteryIconLevelsDirection
+    { 
+        // Horizontal
+        LeftRight,
+        RightLeft,
+        // Vertical
+        BottomUp,
+        TopDown,
     }
 
     public class BatteryIconLevels
@@ -44,8 +47,9 @@
         public int X { get; set; }
         public int Y { get; set; }
 
-        public int? Width { get; set; }
-        public int? Height { get; set; }
+        public BatteryIconLevelsDirection Direction { get; set; }
+
+        public int WidthOrHeight { get; set; }
 
         public int Maximum { get; set; }
     }
@@ -54,7 +58,7 @@
     {
         public int Size { get; set; }
 
-        public DrawRectangle[] Rectangles { get; set; }
+        public Rectangle[] Rectangles { get; set; }
 
         public BatteryIconLevels Levels { get; set; }
     }
@@ -99,15 +103,33 @@
                     Size = 16,
                     Rectangles = new[]
                     {
-                        new DrawRectangle { X = 1, Y = 4, Width = 13, Height = 9 },
-                        new DrawRectangle { X = 15, Y = 7, Width = 1, Height = 4 }
+                        new Rectangle { X = 1, Y = 4, Width = 13, Height = 9 },
+                        new Rectangle { X = 15, Y = 7, Width = 1, Height = 4 }
                     },
                     Levels = new BatteryIconLevels 
                     { 
                         Maximum = 10,
                         X = 3,
                         Y = 6,
-                        Height = 6
+                        WidthOrHeight = 6,
+                        Direction = BatteryIconLevelsDirection.LeftRight
+                    }
+                },
+                BatteryIcon150 = new BatteryIcon
+                {
+                    Size = 24,
+                    Rectangles = new[]
+                    {
+                        new Rectangle { X = 1, Y = 6, Width = 21, Height = 13 },
+                        new Rectangle { X = 23, Y = 11, Width = 1, Height = 4 }
+                    },
+                    Levels = new BatteryIconLevels
+                    {
+                        Maximum = 18,
+                        X = 3,
+                        Y = 8,
+                        WidthOrHeight = 10,
+                        Direction = BatteryIconLevelsDirection.LeftRight
                     }
                 }
             };

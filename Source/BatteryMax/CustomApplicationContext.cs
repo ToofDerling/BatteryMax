@@ -8,7 +8,6 @@ using System.Reflection;
 using System.Diagnostics;
 using System.IO;
 using Microsoft.Win32;
-using Windows.Graphics.Display;
 
 /*
  * ==============================================================
@@ -129,9 +128,8 @@ namespace BatteryMax
 
         private void OnDisplaySettingsChanged(object sender, EventArgs e)
         {
-            // Neither SystemInformation.SmallIconSize (or DisplayProperties.ResolutionScale) changes when
-            // user changes the ui scaling. But screen bounds does. So the easiest way to handle it is to
-            // listen to DisplaySettingsChanged and restart the app if changed.
+            // Neither SystemInformation.SmallIconSize or DisplayProperties.ResolutionScale changes when user changes ui scaling, but
+            // screen bounds does. So the easiest way to handle the change is to listen to DisplaySettingsChanged and restart if changed.
             if (screenBounds != Screen.PrimaryScreen.Bounds)
             {
                 Restart();

@@ -21,7 +21,7 @@ namespace BatteryMax
             var registryValueObject = key?.GetValue(RegistryValueName);
             if (registryValueObject == null)
             {
-                Log.Write("SystemUsesLightTheme is null -> assuming light theme");
+                Log.Write("SystemUsesLightTheme is null. Assuming default light theme");
                 return WindowsTheme.Light;
             }
 

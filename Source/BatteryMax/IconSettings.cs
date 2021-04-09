@@ -21,14 +21,14 @@ namespace BatteryMax
         public Color BackgroundColor => Settings.BackgroundColor;
         public Color ForegroundColor { get; private set; }
 
-        public DrawRectangle[] Rectangles => batteryIcon.Rectangles;
+        public Rectangle[] Rectangles => batteryIcon.Rectangles;
 
         public float PercentPerLevel => 100f / batteryIcon.Levels.Maximum;
 
         public static IconSettings GetSettings(WindowsTheme theme)
         {
             var size = SystemInformation.SmallIconSize;
-            Log.Write($"{nameof(SystemInformation.SmallIconSize)}={size.Width}x{size.Height}");
+            Log.Write($"{nameof(SystemInformation.SmallIconSize)}: {size.Width}x{size.Height}");
 
             return GetSettings(size, theme);
         }
@@ -47,12 +47,13 @@ namespace BatteryMax
                 return new IconSettings(Settings.BatteryIcon100, theme);
             }
 
-            //if (check < 24)
-            //{
-            //    return null; //settings150;
-            //}
+            if (check < 24)
+            {
+                return new IconSettings(Settings.BatteryIcon150, theme);
+            }
 
-            return new IconSettings(Settings.BatteryIcon100, theme);
+            // Return the largest setting we have
+            return new IconSettings(Settings.BatteryIcon150, theme);
         }
 
         public Color GetColor(BatteryData battery)
@@ -77,49 +78,15 @@ namespace BatteryMax
 
         public Rectangle GetChargeLevelsRectangle(int levels)
         {
-            if (batteryIcon.Levels.Height.HasValue)
-            {
-                return new Rectangle(batteryIcon.Levels.X, batteryIcon.Levels.Y, levels, batteryIcon.Levels.Height.Value);
-            }
+            var levelsConfig = batteryIcon.Levels;
 
-            if (batteryIcon.Levels.Width.HasValue)
+            return levelsConfig.Direction switch
             {
-                // X,Y are bottom left
-                return new Rectangle(batteryIcon.Levels.X, batteryIcon.Levels.Y - levels, batteryIcon.Levels.Width.Value, levels);
-            }
-
-            throw new ArgumentException("Cannot create a chargelevels rectangle without a width or a height");
+                BatteryIconLevelsDirection.LeftRight => new Rectangle(levelsConfig.X, levelsConfig.Y, levels, levelsConfig.WidthOrHeight),
+                // X,Y of config are bottom left
+                BatteryIconLevelsDirection.BottomUp => new Rectangle(levelsConfig.X, levelsConfig.Y - levels, levelsConfig.WidthOrHeight, levels),
+                _ => throw new NotImplementedException(levelsConfig.Direction.ToString()),
+            };
         }
-
-
-        /*      private static readonly IconSettings settings100 = new()
-              {
-                  Width = 16,
-                  Height = 16,
-
-                  X = 3,
-                  Y = 6,
-                  Y2 = 11,
-
-                  Levels = 10,
-
-                  Template = @"icons\template_16.png",
-              };
-        */
-        //TODO:
-        /*
-                private static readonly IconSettings settings150 = new IconSettings
-                {
-                    Width = 24,
-                    Height = 24,
-
-
-                    Template = @"icons\template_24.png",
-                    X = 3,
-                    Y = 8,
-                    Y2 = 17,
-                    Levels = 18
-                };
-        */
     }
 }
