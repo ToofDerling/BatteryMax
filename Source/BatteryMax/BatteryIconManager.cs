@@ -28,6 +28,7 @@ namespace BatteryMax
         private UISettings uiSettings;
 
         private WindowsTheme windowsTheme;
+        private WindowsTheme currentWindowsTheme;
 
         public async Task InitializeDataAsync(BatteryData testBatteryData = null)
         {
@@ -42,31 +43,40 @@ namespace BatteryMax
                 {
                     // Based on observation this fires immediately when power status changes. But when unchanged it
                     // fires in 3-6 minutes intervals (which is useless of course).                  
-                    battery.ReportUpdated += (s, e) => OnBatteryDataChanged();
+                    battery.ReportUpdated += (s, e) => OnBatteryReportUpdated();
                 }
             }
+
+            InitializeTheme();
+        }
+
+        private void InitializeTheme()
+        {
+            windowsTheme = ThemeHelper.GetWindowsTheme();
+            currentWindowsTheme = windowsTheme;
 
             uiSettings = new UISettings();
             // Based on observation this fires immediately when Windows theme changes. But none of colors in GetColorValue()
             // or UIElementColor() are actually updated, so changing the colors must be done manually.
-            uiSettings.ColorValuesChanged += (s, e) => OnWindowsThemeChanged();
-
-            windowsTheme = ThemeHelper.GetWindowsTheme();
+            uiSettings.ColorValuesChanged += (s, e) => OnColorValuesChanged();
         }
 
-        private void OnBatteryDataChanged()
+        private void OnBatteryReportUpdated()
         {
-            Log.Write("OnBatteryDataChanged");
-            OnDataChanged();
+            SignalDataChanged();
         }
 
-        private void OnWindowsThemeChanged()
+        private void OnColorValuesChanged()
         {
-            Log.Write($"OnWindowsThemeChanged -> {ThemeHelper.GetWindowsTheme()}");
-            OnDataChanged();
+            currentWindowsTheme = ThemeHelper.GetWindowsTheme();
+            if (windowsTheme != currentWindowsTheme)
+            {
+                Log.Write($"OnWindowsThemeChanged -> {currentWindowsTheme}");
+                SignalDataChanged();
+            }
         }
 
-        private void OnDataChanged()
+        private void SignalDataChanged()
         {
             if (!stopThreadLoop)
             {
@@ -99,16 +109,20 @@ namespace BatteryMax
 
         private bool Update()
         {
-            var currentBatteryData = testBatteryData ?? new BatteryData(battery);
-            var currentWindowsTheme = ThemeHelper.GetWindowsTheme();
+            var currentBatteryData = testBatteryData != null ? testBatteryData.GetNextTestData() : new BatteryData(battery);
 
-            var windowsThemeChanged = windowsTheme != currentWindowsTheme;
-
-            if (windowsThemeChanged
+            // These conditions all forces icon (re)drawing, even if there's no change in CurrentCharge or the change is too small
+            // to cause the number of levels to update.
+            var drawIcon = windowsTheme != currentWindowsTheme
                 || batteryData == null
+                || batteryData.IsCharging != currentBatteryData.IsCharging
+                || batteryData.IsAboveMaximumCharge != currentBatteryData.IsAboveMaximumCharge
+                || batteryData.IsBelowMinimumCharge != currentBatteryData.IsBelowMinimumCharge
+                || batteryData.IsCriticalCharge != currentBatteryData.IsCriticalCharge;
+
+            if (drawIcon
                 || batteryData.CurrentCharge != currentBatteryData.CurrentCharge
                 || batteryData.CurrentTime != currentBatteryData.CurrentTime
-                || batteryData.IsCharging != currentBatteryData.IsCharging
                 || batteryData.IsPluggedInNotCharging != currentBatteryData.IsPluggedInNotCharging)
             {
                 if (currentBatteryData.IsNotAvailable)
@@ -116,7 +130,7 @@ namespace BatteryMax
                     CreateBatteryUpdateText(Resources.BatteryNotFound);
                     CreateBatteryWarningText(Resources.BatteryNotFound);
 
-                    CreateBatteryIcon(currentBatteryData, false, currentWindowsTheme, windowsThemeChanged);
+                    CreateBatteryIcon(currentBatteryData, currentWindowsTheme, drawIcon);
                 }
                 else
                 {
@@ -126,8 +140,7 @@ namespace BatteryMax
                     CreateBatteryUpdateText(currentUpdateText);
                     WarningText = null;
 
-                    var chargingChanged = batteryData == null || batteryData.IsCharging != currentBatteryData.IsCharging;
-                    CreateBatteryIcon(currentBatteryData, chargingChanged, currentWindowsTheme, windowsThemeChanged);
+                    CreateBatteryIcon(currentBatteryData, currentWindowsTheme, drawIcon);
                 }
 
                 batteryData = currentBatteryData;
@@ -184,8 +197,7 @@ namespace BatteryMax
                     {
                         lock (lockObj)
                         {
-                            var timedOut = !Monitor.Wait(lockObj, 1000);
-                            Log.Write($"timedOut={timedOut}");
+                            Monitor.Wait(lockObj, 1000);
                         }
                     }
                 }
@@ -198,7 +210,7 @@ namespace BatteryMax
 
         private int drawWidth = -1;
 
-        private void CreateBatteryIcon(BatteryData battery, bool chargingChanged, WindowsTheme theme, bool themeChanged)
+        private void CreateBatteryIcon(BatteryData battery, WindowsTheme theme, bool drawIcon)
         {
             var iconSettings = IconSettings.GetSettings(theme);
 
@@ -206,10 +218,7 @@ namespace BatteryMax
 
             var currentDrawWidth = builder.GetDrawingWidth(battery);
 
-            var buildIcon = currentDrawWidth != drawWidth || chargingChanged || themeChanged;
-            drawWidth = currentDrawWidth;
-
-            Log.Write($"{nameof(buildIcon)}={buildIcon} {nameof(currentDrawWidth)}={currentDrawWidth} {nameof(chargingChanged)}={chargingChanged} {nameof(themeChanged)}={themeChanged}  ");
+            var buildIcon = drawIcon || currentDrawWidth != drawWidth;
 
             if (buildIcon)
             {
@@ -219,6 +228,8 @@ namespace BatteryMax
             {
                 UpdateIcon = null;
             }
+
+            drawWidth = currentDrawWidth;
         }
     }
 }

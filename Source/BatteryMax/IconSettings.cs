@@ -47,12 +47,12 @@ namespace BatteryMax
                 return new IconSettings(Settings.BatteryIcon100, theme);
             }
 
-            if (check < 24)
-            {
-                return null; //settings150;
-            }
+            //if (check < 24)
+            //{
+            //    return null; //settings150;
+            //}
 
-            return null;// settings150;
+            return new IconSettings(Settings.BatteryIcon100, theme);
         }
 
         public Color GetColor(BatteryData battery)

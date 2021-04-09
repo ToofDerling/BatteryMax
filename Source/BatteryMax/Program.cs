@@ -23,8 +23,9 @@ namespace BatteryMax
                 Application.SetCompatibleTextRenderingDefault(false);
 
                 var applicationContext = new CustomApplicationContext();
-                //await applicationContext.InitializeContextAsync(new TestBatteryData());
-                await applicationContext.InitializeContextAsync();
+
+                await applicationContext.InitializeContextAsync(new TestBatteryDraining());
+                //await applicationContext.InitializeContextAsync();
 
                 Application.Run(applicationContext);
 
@@ -49,14 +50,47 @@ namespace BatteryMax
             });
     }
 
-    public class TestBatteryData : BatteryData
+    public class TestBatteryDraining : BatteryData
     {
-        public TestBatteryData() : base(null)
+        private int count = 0;
+        private const int interval = 5;
+
+        private const int currentChargeStep = -2;
+
+        private TestBatteryDraining testBatteryDraining;
+
+        public TestBatteryDraining() : base(null)
         {
             IsNotAvailable = false;
-            CurrentCharge = 15;
-            CurrentTime = TimeSpan.FromMinutes(12);
-            IsBelowMinimumCharge = true;
+
+            CurrentCharge = 100;
+            TotalSecondsRemaining = (CurrentCharge / currentChargeStep) * interval;
+            SetChargeMinimumMaximum();
+            CalculateRemainingTime();
+
+            testBatteryDraining = this;
+        }
+
+        public override BatteryData GetNextTestData()
+        {
+            if (++count % interval == 0)
+            {
+                var newCurrentCharge = testBatteryDraining.CurrentCharge + currentChargeStep;
+                var newTotalSecondsRemaining = newCurrentCharge / currentChargeStep * interval;
+                testBatteryDraining = new TestBatteryDraining
+                {
+                    CurrentCharge = newCurrentCharge,
+                    TotalSecondsRemaining = newTotalSecondsRemaining
+                };
+                testBatteryDraining.SetChargeMinimumMaximum();
+                testBatteryDraining.CalculateRemainingTime();
+                if (newCurrentCharge < 10)
+                {
+                    testBatteryDraining.IsCriticalCharge = true;
+                }
+            }
+
+            return testBatteryDraining;
         }
     }
 }

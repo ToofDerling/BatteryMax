@@ -4,6 +4,11 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Threading.Tasks;
+using System.Reflection;
+using System.Diagnostics;
+using System.IO;
+using Microsoft.Win32;
+using Windows.Graphics.Display;
 
 /*
  * ==============================================================
@@ -92,6 +97,13 @@ namespace BatteryMax
             detailsItem.Click += (s, e) => ShowDetailsForm();
             notifyIcon.ContextMenuStrip.Items.Add(detailsItem);
 
+            var restartItem = new ToolStripMenuItem
+            {
+                Text = "R&estart"
+            };
+            restartItem.Click += (s, e) => Restart();
+            notifyIcon.ContextMenuStrip.Items.Add(restartItem);
+
             var exitItem = new ToolStripMenuItem
             {
                 Text = "E&xit"
@@ -108,8 +120,44 @@ namespace BatteryMax
             // ShowBalloonTip only works when notifyicon is visble so any initial message (like battery not found) must run here.
             ShowBalloon();
 
+            screenBounds = Screen.PrimaryScreen.Bounds;
+            SystemEvents.DisplaySettingsChanged += OnDisplaySettingsChanged;
+
             batteryIconManager.BatteryChanged += (s, e) => UpdateIcon();
             batteryIconManager.Start();
+        }
+
+        private void OnDisplaySettingsChanged(object sender, EventArgs e)
+        {
+            // Neither SystemInformation.SmallIconSize (or DisplayProperties.ResolutionScale) changes when
+            // user changes the ui scaling. But screen bounds does. So the easiest way to handle it is to
+            // listen to DisplaySettingsChanged and restart the app if changed.
+            if (screenBounds != Screen.PrimaryScreen.Bounds)
+            {
+                Restart();
+            }
+        }
+
+        private Rectangle screenBounds;
+
+
+        private void Restart()
+        {
+            SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
+            ExitThread();
+
+            var dll = Assembly.GetExecutingAssembly().Location;
+            var exe = Path.ChangeExtension(dll, ".exe");
+
+            var process = new Process
+            {
+                StartInfo =
+                {
+                    FileName = exe,
+                    UseShellExecute = true,
+                }
+            };
+            process.Start();
         }
 
         private void ShowBalloon()

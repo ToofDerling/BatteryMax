@@ -28,30 +28,30 @@ namespace BatteryMax
         /// If not IsCharging and >= MinimumCharge it's the time to MinimumCharge.
         /// If not IsCharging and < MinimumCharge it's the time to zero charge.
         /// </summary>
-        public TimeSpan CurrentTime { get; protected set; }
+        public TimeSpan CurrentTime { get; private set; }
 
         /// <summary>
         /// True if battery is charging. Note that we can run on AC power and not be charging. 
         /// </summary>
-        public bool IsCharging { get; protected set; }
+        public bool IsCharging { get; private set; }
 
         /// <summary>
         /// If system runs on AC power but isn't charging.
         /// </summary>
-        public bool IsPluggedInNotCharging { get; protected set; }
+        public bool IsPluggedInNotCharging { get; private set; }
 
         /// <summary>
         /// Above the user defined maximum charge
         /// </summary>
-        public bool IsAboveMaximumCharge { get; protected set; }
+        public bool IsAboveMaximumCharge { get; private set; }
 
         /// <summary>
         /// Below the user defined minimum charge
         /// </summary>
-        public bool IsBelowMinimumCharge { get; protected set; }
+        public bool IsBelowMinimumCharge { get; private set; }
 
         // Remaining seconds to zero charge as reported by Windows (is -1 if charging)
-        private int TotalSecondsRemaining { get; set; }
+        protected int TotalSecondsRemaining { get; set; }
 
         // Only set if charging
         private int ChargeRate { get; set; }
@@ -84,8 +84,7 @@ namespace BatteryMax
             TotalSecondsRemaining = status.BatteryLifeRemaining;
 
             CurrentCharge = Convert.ToInt32(status.BatteryLifePercent * 100);
-            IsAboveMaximumCharge = CurrentCharge > Settings.MaximumCharge;
-            IsBelowMinimumCharge = CurrentCharge < Settings.MinimumCharge;
+            SetChargeMinimumMaximum();
 
             if (IsCharging = status.BatteryChargeStatus.HasFlag(BatteryChargeStatus.Charging))
             {
@@ -100,9 +99,15 @@ namespace BatteryMax
             else
             {
                 IsPluggedInNotCharging = status.PowerLineStatus == PowerLineStatus.Online;
-             
+
                 CalculateRemainingTime();
             }
+        }
+
+        protected void SetChargeMinimumMaximum()
+        {
+            IsAboveMaximumCharge = CurrentCharge > Settings.MaximumCharge;
+            IsBelowMinimumCharge = CurrentCharge < Settings.MinimumCharge;
         }
 
         private void CalculateChargingTime()
@@ -132,7 +137,7 @@ namespace BatteryMax
             CurrentTime = TimeSpan.FromHours(hoursToMaximumCapacity);
         }
 
-        private void CalculateRemainingTime()
+        protected void CalculateRemainingTime()
         {
             if (TotalSecondsRemaining <= 0 // Will be -1 if charging
                 || IsPluggedInNotCharging) // This can happen if charging is stopped by an utility like ASUS Battery Health Charging
@@ -154,6 +159,11 @@ namespace BatteryMax
             var remainingSeconds = TotalSecondsRemaining - difference;
 
             CurrentTime = TimeSpan.FromSeconds(remainingSeconds);
+        }
+
+        public virtual BatteryData GetNextTestData()
+        {
+            return null;
         }
 
         public override string ToString()
