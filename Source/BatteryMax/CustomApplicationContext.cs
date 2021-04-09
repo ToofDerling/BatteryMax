@@ -138,10 +138,12 @@ namespace BatteryMax
 
         private Rectangle screenBounds;
 
-
         private void Restart()
         {
+            // MSDN: "Because this is a static event, you must detach your event handlers when your application is disposed,
+            // or memory leaks will result."
             SystemEvents.DisplaySettingsChanged -= OnDisplaySettingsChanged;
+
             ExitThread();
 
             var dll = Assembly.GetExecutingAssembly().Location;

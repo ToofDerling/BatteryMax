@@ -66,7 +66,8 @@ namespace BatteryMax
     public record BatteryMaxConfiguration
     {
         /// <summary>
-        /// This provides the default values for the ChargeLevels and IconColors properties
+        /// Default values for the ChargeLevels and IconColors properties
+        /// These defaults are applied before configuration binding - all the values can be overwritten in the configfile
         /// </summary>
         /// <returns></returns>
         public static BatteryMaxConfiguration StaticDefaults()
@@ -91,8 +92,9 @@ namespace BatteryMax
         }
 
         /// <summary>
-        /// This provides the default values for the BatteryIconNNN properties
-        /// /// </summary>
+        /// Default values for the BatteryIconNNN properties
+        /// These defaults are applied after configuration binding, only if the properties are not supplied in the configfile.
+        /// </summary>
         /// <returns></returns>
         public static BatteryMaxConfiguration BatteryIconDefaults()
         {

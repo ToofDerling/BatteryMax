@@ -12,7 +12,7 @@ namespace BatteryMax
             var batterySelector = Battery.GetDeviceSelector();
 
             var batteryCollection = await DeviceInformation.FindAllAsync(batterySelector);
-            Log.Write("Battery count {0}", batteryCollection.Count);
+            Log.Write("Battery count: {0}", batteryCollection.Count);
 
             if (batteryCollection.Count == 0)
             {

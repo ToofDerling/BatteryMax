@@ -57,7 +57,7 @@ namespace BatteryMax
 
             uiSettings = new UISettings();
             // Based on observation this fires immediately when Windows theme changes. But none of colors in GetColorValue()
-            // or UIElementColor() are actually updated, so changing the colors must be done manually.
+            // or UIElementColor() are actually updated, so handling the theme change must be done manually.
             uiSettings.ColorValuesChanged += (s, e) => OnColorValuesChanged();
         }
 

@@ -24,12 +24,10 @@ namespace BatteryMax
 
                 var applicationContext = new CustomApplicationContext();
 
-                await applicationContext.InitializeContextAsync(new TestBatteryDraining());
-                //await applicationContext.InitializeContextAsync();
+                //await applicationContext.InitializeContextAsync(new TestBatteryDraining());
+                await applicationContext.InitializeContextAsync();
 
                 Application.Run(applicationContext);
-
-                //await host.RunAsync(); This... is not needed?
             }
             catch (Exception ex)
             {
